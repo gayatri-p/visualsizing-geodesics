@@ -1,23 +1,49 @@
 import numpy as np 
 
-class GeodesicSolver:
+class Schwarzschild:
     def __init__(self, M):
         self.M = M
-        
+        self.r_EH = 2*self.M
+    
     def g_tt(self, r, theta):
-        return 0  
+        return -(1 - 2*self.M/r)
     
     def g_rr(self, r, theta):
-        return 0
-    
+        return 1/(1 - 2*self.M/r)
+
     def g_thth(self, r, theta):
-        return 0
-    
+        return r**2
+
     def g_phph(self, r, theta):
-        return 0  
+        return r**2*np.sin(theta)**2    
     
-    def g_tph(self, r, theta):
-        return 0 
+    def geodesic_eq_t(self, y):
+        t, r, theta, phi, p0, p1, p2, p3 = y  
+        
+        return -2*self.M*p1*p0/(r*(r-2*self.M))
+
+    def geodesic_eq_r(self, y):
+        t, r, theta, phi, p0, p1, p2, p3 = y  
+        sin = np.sin(theta)
+        M = self.M
+        ch0 = M*(r-2*M)/r**3
+        ch1 = -M/(r*(r-2*M))
+        ch2 = -(r-2*M)
+        ch3 = -(r-2*M)*sin**2
+        return -(ch0*p0**2 + ch1*p1**2 + ch2*p2**2 + ch3*p3**2) 
+    
+    def geodesic_eq_theta(self, y):
+        t, r, theta, phi, p0, p1, p2, p3 = y  
+        sin = np.sin(theta)
+        cos = np.cos(theta)
+        M = self.M
+        return -(2*p1*p2/r - sin*cos*p3**2)
+    
+    def geodesic_eq_phi(self, y):
+        t, r, theta, phi, p0, p1, p2, p3 = y  
+        sin = np.sin(theta)
+        cos = np.cos(theta)
+        return -2*(p1*p3/r - cos*p2*p3/sin)
     
     def compute_4momentum(self, r0, E, Lz, epsilon = 0):
         p0 = E/(1 - 2*self.M/r0)
@@ -30,18 +56,6 @@ class GeodesicSolver:
             p1 = 0
         return p0, p1, p3
 
-    def geodesic_eq_t(self, y):
-        pass 
-    
-    def geodesic_eq_r(self, y):
-        pass
-    
-    def geodesic_eq_theta(self, y):
-        pass
-    
-    def geodesic_eq_phi(self, y):
-        pass
-    
     def geodesic_eq(self, y):
         """
         Return 8 differential equations which solve for the geodesic.
@@ -62,7 +76,7 @@ class GeodesicSolver:
         
         return derivatives
     
-    def RKF45(self, y, h, tol = 1e-7):
+    def RKF45(self, y, h, tol = 1e-12):
         abs_error = np.inf
 
         while abs_error > tol:
@@ -97,49 +111,3 @@ class GeodesicSolver:
             affine_parameter[i + 1] = affine_parameter[i] + h
 
         return affine_parameter, y
-
-class Schwarzschild(GeodesicSolver):
-    def __init__(self, M):
-        GeodesicSolver.__init__(self, M)
-        self.M = M
-        self.r_EH = 2*self.M
-        
-    def g_tt(self, r, theta):
-        return -(1 - 2*self.M/r)
-    
-    def g_rr(self, r, theta):
-        return 1/(1 - 2*self.M/r)
-
-    def g_thth(self, r, theta):
-        return r**2
-
-    def g_phph(self, r, theta):
-        return r**2*np.sin(theta)**2    
-    
-    def geodesic_eq_t(self, y):
-        t, r, theta, phi, p0, p1, p2, p3 = y  
-        
-        return -2*self.M*self.M*p1*p0/(r*(r-2*self.M))
-
-    def geodesic_eq_r(self, y):
-        t, r, theta, phi, p0, p1, p2, p3 = y  
-        sin = np.sin(theta)
-        M = self.M
-        ch0 = M*(r-2*M)/r**3
-        ch1 = -M/(r*(r-2*M))
-        ch2 = -(r-2*M)
-        ch3 = -(r-2*M)*sin**2
-        return -(ch0*p0**2 + ch1*p1**2 + ch2*p2**2 + ch3*p3**2) 
-    
-    def geodesic_eq_theta(self, y):
-        t, r, theta, phi, p0, p1, p2, p3 = y  
-        sin = np.sin(theta)
-        cos = np.cos(theta)
-        M = self.M
-        return -(2*p1*p2/r - sin*cos*p3**2)
-    
-    def geodesic_eq_phi(self, y):
-        t, r, theta, phi, p0, p1, p2, p3 = y  
-        sin = np.sin(theta)
-        cos = np.cos(theta)
-        return -2*(p1*p3/r - cos*p2*p3/sin)

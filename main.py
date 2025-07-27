@@ -1,6 +1,6 @@
 from manim import *
 from math import *
-from solver import *
+from solver import Schwarzschild
 
 def trajectory(r0 = 3, E=1, Lz=5, M=1, epsilon=0):
     schwarz = Schwarzschild(M = M)
@@ -11,10 +11,10 @@ def trajectory(r0 = 3, E=1, Lz=5, M=1, epsilon=0):
     theta0 = np.pi/2
     phi0 = 0
 
-    # p0 = 0 # time
-    # p1 = 0 # r
+    p0 = 0 # time
+    p1 = 0 # r
     p2 = 0 # theta
-    # p3 = 0 # phi
+    p3 = 0 # phi
     
     n_rays = 1 # number of light rays
     N = 100 # number of simulation points
@@ -25,10 +25,7 @@ def trajectory(r0 = 3, E=1, Lz=5, M=1, epsilon=0):
         y0 = [t0, r0, theta0, phi0, p0, p1, p2, p3]
 
         # Solve the equations of motion for a specified number of steps with a specified initial step size
-        if epsilon == -1:
-            tau, sol = schwarz.solve(y0, N, 1e-5)
-        else:
-            tau, sol = schwarz.solve(y0, N, 1e-5)
+        tau, sol = schwarz.solve(y0, N, 1e-5)
 
         t, r, theta, phi = sol[:, 0], sol[:, 1], sol[:, 2], sol[:, 3]
 
@@ -58,11 +55,14 @@ class BlackHole(Scene):
         M = 1
         epsilon = 0
         all_photons, r_EH = trajectory(r0, E, Lz, M, epsilon)
+        
+        # Add Text
         self.add(Tex(r'$E =$' + f' {E},' +r' $M_{BH}=$'+f' {M},' +r' $L_z=$' + f' {Lz:.2f}', font_size=30).to_edge(DR).set_color(WHITE))
         self.add(MarkupText('Trajectory of a', font_size=30).to_edge(UL).set_color(WHITE))
         self.add(MarkupText(f'<span fgcolor="{YELLOW}">Photon</span> and a', font_size=30).next_to(self.mobjects[-1],DOWN))
         self.add(MarkupText(f'<span fgcolor="{BLUE}">Massive Particle</span>', font_size=30).next_to(self.mobjects[-1],DOWN))
         
+        # Draw Trajectories
         curves = VGroup()
         colors = [YELLOW, BLUE]
         for i, points in enumerate(all_photons):
@@ -70,6 +70,7 @@ class BlackHole(Scene):
             curve.set_stroke(colors[i], 3)
             curves.add(curve)
 
+        # Draw the Black Hole
         black_hole_core = VMobject().set_points_as_corners(axes.c2p(circle(r_EH)))
         black_hole_core.set_stroke(
                 opacity=0
@@ -78,6 +79,7 @@ class BlackHole(Scene):
         self.add(black_hole_core)
         black_hole_core.z_index = 1
 
+        # Draw the Photosphere
         photosphere = VMobject().set_points_as_corners(axes.c2p(circle(3*M)))
         photosphere.set_stroke(
                 color=RED, 
